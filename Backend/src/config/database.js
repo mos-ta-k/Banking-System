@@ -6,9 +6,8 @@ require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 const connectToDB = async () => {
   const mongoUri = process.env.MONGODB_URI;
 
-  if (!mongoUri) {
-    console.error("MONGODB_URI is not defined in environment variables.");
-    process.exit(1);
+  if (!process.env.MONGODB_URI) {
+    console.warn("MONGODB_URI is not defined. Falling back to mongodb://127.0.0.1:27017/banking-system");
   }
 
   try {
@@ -18,6 +17,7 @@ const connectToDB = async () => {
       serverSelectionTimeoutMS: 10000,
       autoIndex: true,
       maxPoolSize: 10,
+      dbName: "banking-system",
     });
 
     console.log("Database connected successfully.");

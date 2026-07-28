@@ -4,10 +4,12 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
+const cookieParser = require("cookie-parser")
 
 const config = require("./config");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
 const healthRoutes = require("./routes/health");
+const authRouter = require("../src/routes/auth.routes")
 
 const app = express();
 
@@ -17,6 +19,7 @@ app.use(morgan(config.env === "production" ? "combined" : "dev"));
 app.use(compression());
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(cookieParser());
 
 app.use(
   rateLimit({
@@ -28,6 +31,7 @@ app.use(
 );
 
 app.use("/health", healthRoutes);
+app.use("/api/auth", authRouter);
 
 // keep these last
 app.use(notFound);
