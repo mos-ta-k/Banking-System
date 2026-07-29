@@ -8,7 +8,8 @@ async function createAccountController(req, res){
     })
 
     res.status(201).json({
-        account
+        account,
+        message: "account created successfully!"
     })
 }
 
