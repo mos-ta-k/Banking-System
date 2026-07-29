@@ -4,12 +4,15 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
-const cookieParser = require("cookie-parser")
+const cookieParser = require("cookie-parser");
 
 const config = require("./config");
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
+
+/** routes required */
 const healthRoutes = require("./routes/health");
-const authRouter = require("../src/routes/auth.routes")
+const authRouter = require("../src/routes/auth.routes");
+const accountRouter = require("./routes/accounts.routes");
 
 const app = express();
 
@@ -30,8 +33,10 @@ app.use(
   }),
 );
 
+/** use routes */
 app.use("/health", healthRoutes);
 app.use("/api/auth", authRouter);
+app.use("/api/account", accountRouter);
 
 // keep these last
 app.use(notFound);
