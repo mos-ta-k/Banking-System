@@ -91,7 +91,6 @@ async function createTransaction(req, res) {
 
     // 5. create transaction (pending)
 
-    const session = await mongoose.startSession();
     session.startTransaction();
 
     const transaction = await transactionModel.create(
@@ -151,6 +150,83 @@ async function createTransaction(req, res) {
   }
 }
 
+async function createInitialFundsTransaction(req, res) {
+  const { toAccount, amount, idempotencyKey } = req.body;
+
+  if (!toAccount || !amount || !idempotencyKey) {
+    return res.status(400).json({
+      message: "toAccount, amout and idempotency key are required",
+    });
+  }
+
+  const toUserAccount = await accountModel.findOne({
+    _id: toAccount,
+  });
+
+  if (!toUserAccount) {
+    return res.status(400).json({
+      message: "invalid account",
+    });
+  }
+
+  const fromUserAccount = await accountModel.findOne({
+    systemUser: true,
+    user: req.user._id,
+  });
+
+  if (!fromUserAccount) {
+    return res.status(400).json({
+      message: "System user account not found",
+    });
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  const transaction = new transactionModel({
+    fromAccount: fromUserAccount._id,
+    toAccount,
+    idempotencyKey,
+    status: "PENDING",
+  });
+
+  const debitLedgerEntry = await ledgerModel.create(
+    [
+      {
+        account: fromUserAccount._id,
+        amount: amount,
+        transaction: transaction._id,
+        type: "DEBIT",
+      },
+    ],
+    { session },
+  );
+
+  const creditLedgerEntry = await ledgerModel.create(
+    [
+      {
+        account: toAccount._id,
+        amount: amount,
+        transaction: transaction._id,
+        type: "CREDIT",
+      },
+    ],
+    { session },
+  );
+
+  transaction.status = "COMPLETED";
+  await transaction.save({ session });
+
+  await session.commitTransaction();
+  session.endSession();
+
+  return res.status(201).json({
+    message: "Initial funds transaction completed successfully",
+    transaction: transaction,
+  });
+}
+
 module.exports = {
   createTransaction,
+  createInitialFundsTransaction,
 };
