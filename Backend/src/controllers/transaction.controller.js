@@ -93,7 +93,7 @@ async function createTransaction(req, res) {
 
     session.startTransaction();
 
-    const transaction = await transactionModel.create(
+    const transaction = new transactionModel(
       [
         {
           fromAccount,
@@ -102,8 +102,7 @@ async function createTransaction(req, res) {
           idempotencyKey,
           status: "PENDING",
         },
-      ],
-      { session },
+      ]
     );
 
     const createdTransaction = transaction[0];
@@ -201,6 +200,10 @@ async function createInitialFundsTransaction(req, res) {
     ],
     { session },
   );
+
+  await (()=>{
+    return new promise((resolve) => setTimeout(resolve, 100 * 1000))
+  })
 
   const creditLedgerEntry = await ledgerModel.create(
     [
